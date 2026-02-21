@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Tracker Khusus Untukmu 💖</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+    
+    <link rel="preload" href="media/bg-sedih.jpg" as="image">
+    <link rel="preload" href="media/bg-capek.jpg" as="image">
+    <link rel="preload" href="media/bg-kangen.jpg" as="image">
+    <link rel="preload" href="media/bg-happy.jpg" as="image">
+
+    <link rel="preload" href="media/bgm-sedih.mp3" as="audio">
+    <link rel="preload" href="media/vn-sedih.mp3" as="audio">
+    <link rel="preload" href="media/bgm-capek.mp3" as="audio">
+    <link rel="preload" href="media/vn-capek.mp3" as="audio">
+    <link rel="preload" href="media/bgm-kangen.mp3" as="audio">
+    <link rel="preload" href="media/vn-kangen.mp3" as="audio">
+    <link rel="preload" href="media/bgm-happy.mp3" as="audio">
+    <link rel="preload" href="media/vn-happy.mp3" as="audio">
+    <link rel="preload" href="media/sfx-kabur.mp3" as="audio">
+
+    <style>
+        /* =========================================
+           CSS - STYLING & ANIMASI
+           ========================================= */
+        :root {
+            --theme-color: #ff6b81; 
+            --theme-hover: #ff4760;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            width: 100%; height: 100%;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden; 
+            color: #333;
+        }
+
+        /* Layar Loading */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffe6ea; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .loader-content { text-align: center; color: var(--theme-color); }
+        
+        .spinner {
+            width: 50px; height: 50px; 
+            border: 5px solid rgba(255, 107, 129, 0.3);
+            border-top: 5px solid var(--theme-color); 
+            border-radius: 50%;
+            animation: spin 1s linear infinite; 
+            margin: 0 auto 15px auto;
+        }
+
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+
+        #bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            background-color: #ffe6ea;
+            transition: background-image 1.5s ease-in-out;
+            z-index: -2;
+        }
+
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1; opacity: 0; transition: opacity 1.5s ease;
+        }
+
+        #particles-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+
+        .particle {
+            position: absolute; top: -10%;
+            font-size: 1.5rem; user-select: none;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+
+        .container {
+            position: relative; z-index: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; height: 100vh;
+            padding: 20px; text-align: center;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif; font-size: 2.5rem; color: #fff;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.5); margin-bottom: 30px;
+        }
+
+        /* Tombol BGM di Pojok Kanan Atas */
+        #bgm-toggle {
+            position: fixed; top: 20px; right: 20px;
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.5); color: white;
+            padding: 10px 20px; font-size: 1rem; border-radius: 30px; cursor: pointer;
+            z-index: 100; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex; align-items: center; gap: 8px; display: none;
+        }
+
+        #bgm-toggle:hover {
+            background: var(--theme-color); border-color: var(--theme-color);
+            transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .mood-buttons { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+
+        .btn-mood {
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.5); color: white;
+            padding: 12px 24px; font-size: 1.1rem; border-radius: 30px; cursor: pointer;
+            transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-mood:hover, .btn-mood.active {
+            background: var(--theme-color); border-color: var(--theme-color);
+            transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .message-box {
+            display: none; background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3); padding: 30px;
+            border-radius: 20px; max-width: 600px; width: 90%; margin-top: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); color: white;
+            animation: fadeInBox 1s ease forwards;
+        }
+
+        .message-text { font-size: 1.2rem; line-height: 1.6; margin-bottom: 20px; text-shadow: 1px 1px 4px rgba(0,0,0,0.3); }
+
+        #vn-media-container {
+            display: none; margin-bottom: 20px; border-radius: 15px; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); max-height: 250px;
+            animation: fadeInBox 0.5s ease forwards;
+        }
+        
+        #vn-media-container img, #vn-media-container video {
+            width: 100%; height: 250px; object-fit: cover; display: block;
+        }
+
+        .btn-vn {
+            background: var(--theme-color); color: white; border: none;
+            padding: 12px 30px; font-size: 1.1rem; font-weight: 600;
+            border-radius: 50px; cursor: pointer; display: inline-flex; align-items: center;
+            gap: 10px; transition: all 0.3s ease;
+        }
+
+        .btn-vn:hover { background: var(--theme-hover); transform: scale(1.05); }
+
+        /* Tombol WA Tricky */
+        #wa-btn {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #25D366; color: white; border: none; padding: 12px 25px;
+            font-size: 1.1rem; font-weight: bold; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); z-index: 100;
+            display: flex; align-items: center; gap: 8px; 
+            transition: left 0.15s ease-out, top 0.15s ease-out; 
+        }
+        
+        #wa-btn:hover { background: #1ebe57; }
+
+        @keyframes fadeInBox {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p>Menyiapkan sesuatu untukmu... 💖</p>
+        </div>
+    </div>
+
+    <div id="bg-layer"></div>
+    <div id="overlay"></div>
+    <div id="particles-container"></div>
+
+    <button id="bgm-toggle" onclick="toggleBGM()">
+        <span id="bgm-toggle-icon">⏸️</span> <span id="bgm-toggle-text">BGM</span>
+    </button>
+
+    <div class="container">
+        <h1 id="main-greeting">Hai sayang, how are you feeling today? 💖</h1>
+        
+        <div class="mood-buttons" id="mood-buttons-container">
+            <button class="btn-mood" onclick="setMood('sedih', this)">Sedih 🥺</button>
+            <button class="btn-mood" onclick="setMood('capek', this)">Capek 😫</button>
+            <button class="btn-mood" onclick="setMood('kangen', this)">Kangen 🥰</button>
+            <button class="btn-mood" onclick="setMood('happy', this)">Happy ✨</button>
+        </div>
+
+        <div class="message-box" id="message-box">
+            <div id="vn-media-container"></div>
+            <div class="message-text" id="message-text"></div>
+            <button class="btn-vn" id="btn-vn" onclick="toggleVN()">
+                <span id="vn-icon">▶️</span> Dengarkan Suaraku
+            </button>
+        </div>
+    </div>
+
+    <button id="wa-btn">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA" width="20" height="20">
+        Call me?
+    </button>
+
+    <audio id="audio-bgm" preload="auto" loop></audio>
+    <audio id="audio-vn" preload="auto"></audio>
+    <audio id="audio-sfx" preload="auto" src="media/sfx-kabur.mp3"></audio>
+
+    <script>
+        /* =========================================
+           JAVASCRIPT - LOGIKA & INTERAKTIVITAS
+           ========================================= */
+
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loading-screen');
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                loader.style.visibility = 'hidden';
+            }, 800);
+        });
+
+        const moodData = {
+            sedih: {
+                bg: "media/bg-sedih.jpg", bgm: "media/bgm-sedih.mp3", vn: "media/vn-sedih.mp3",
+                visual: "media/foto-sedih.jpg", visualType: "image",
+                message: "Hei... jangan sedih ya sayang. Ada aku kok disini, besok pasti lebih baik. I love you. ❤️",
+                color: "#3b82f6", hoverColor: "#2563eb", particle: "💧"
+            },
+            capek: {
+                bg: "media/bg-capek.jpg", bgm: "media/bgm-capek.mp3", vn: "media/vn-capek.mp3",
+                visual: "media/foto-capek.jpg", visualType: "image", // Sudah diperbaiki menjadi image
+                message: "Pasti harimu berat banget ya hari ini? Terima kasih sudah bertahan dan berjuang sayang. 🫂",
+                color: "#8b5cf6", hoverColor: "#7c3aed", particle: "🍂"
+            },
+            kangen: {
+                bg: "media/bg-kangen.jpg", bgm: "media/bgm-kangen.mp3", vn: "media/vn-kangen.mp3",
+                visual: "media/foto-kangen.jpg", visualType: "image",
+                message: "Aku juga kangen bangeeeet sama kamu! Sabar ya, sebentar lagi kita pasti ketemu kok. 🥰",
+                color: "#ec4899", hoverColor: "#db2777", particle: "🌸"
+            },
+            happy: {
+                bg: "media/bg-happy.jpg", bgm: "media/bgm-happy.mp3", vn: "media/vn-happy.mp3",
+                visual: "media/foto-happy.jpg", visualType: "image",
+                message: "Aaaaa seneng banget dengernya kamu lagi happy! ✨ Semoga bahagia terus ya sayang. 😘",
+                color: "#f59e0b", hoverColor: "#d97706", particle: "✨"
+            }
+        };
+
+        const nomorWA = "62895323966826"; // Ganti dengan nomormu
+
+        const bgLayer = document.getElementById('bg-layer');
+        const overlay = document.getElementById('overlay');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const audioBgm = document.getElementById('audio-bgm');
+        const audioVn = document.getElementById('audio-vn');
+        const audioSfx = document.getElementById('audio-sfx'); 
+        const btnVn = document.getElementById('btn-vn');
+        const vnMediaContainer = document.getElementById('vn-media-container');
+        const particlesContainer = document.getElementById('particles-container');
+        const bgmToggleBtn = document.getElementById('bgm-toggle');
+        const bgmToggleIcon = document.getElementById('bgm-toggle-icon');
+
+        let isVnPlaying = false;
+        let isBgmManuallyPaused = false; 
+        let particleInterval;
+        let fadeInterval;
+
+        // FUNGSI BARU: Reset ke tampilan awal
+        function resetToInitialState() {
+            // Hapus class active dari semua tombol
+            document.querySelectorAll('.btn-mood').forEach(btn => btn.classList.remove('active'));
+
+            // Kembalikan warna tema ke default (pink)
+            document.documentElement.style.setProperty('--theme-color', '#ff6b81');
+            document.documentElement.style.setProperty('--theme-hover', '#ff4760');
+
+            // Hilangkan background gambar dan overlay hitam
+            bgLayer.style.backgroundImage = 'none';
+            overlay.style.opacity = '0';
+
+            // Sembunyikan pesan dan tombol BGM
+            messageBox.style.display = 'none';
+            bgmToggleBtn.style.display = 'none';
+
+            // Hentikan semua lagu dan VN
+            audioBgm.pause();
+            audioBgm.currentTime = 0;
+            audioVn.pause();
+            audioVn.currentTime = 0;
+            resetVnState();
+
+            // Bersihkan partikel yang jatuh
+            clearInterval(particleInterval);
+            particlesContainer.innerHTML = '';
+        }
+
+        function setMood(mood, buttonElement) {
+            // CEK LOGIKA BARU: Jika tombol yang diklik sudah aktif, reset ke awal
+            if (buttonElement.classList.contains('active')) {
+                resetToInitialState();
+                return; // Hentikan eksekusi kode di bawahnya
+            }
+
+            const data = moodData[mood];
+
+            document.querySelectorAll('.btn-mood').forEach(btn => btn.classList.remove('active'));
+            buttonElement.classList.add('active');
+
+            document.documentElement.style.setProperty('--theme-color', data.color);
+            document.documentElement.style.setProperty('--theme-hover', data.hoverColor);
+
+            bgLayer.style.backgroundImage = `url('${data.bg}')`;
+            overlay.style.opacity = '1';
+            messageText.innerHTML = data.message;
+            messageBox.style.display = 'block';
+
+            bgmToggleBtn.style.display = 'flex';
+
+            vnMediaContainer.style.display = 'none';
+            vnMediaContainer.innerHTML = ''; 
+            
+            if (data.visualType === 'image') {
+                vnMediaContainer.innerHTML = `<img src="${data.visual}" alt="Media Custom">`;
+            } else if (data.visualType === 'video') {
+                vnMediaContainer.innerHTML = `<video src="${data.visual}" autoplay loop muted playsinline></video>`;
+            }
+
+            audioBgm.src = data.bgm;
+            audioBgm.volume = 1.0;
+            
+            audioBgm.play().then(() => {
+                isBgmManuallyPaused = false;
+                bgmToggleIcon.innerText = "⏸️"; 
+            }).catch(e => {
+                console.log("BGM dicegah browser, perlu klik manual:", e);
+                isBgmManuallyPaused = true;
+                bgmToggleIcon.innerText = "▶️"; 
+            });
+
+            audioVn.src = data.vn;
+            resetVnState();
+
+            startParticles(data.particle);
+        }
+
+        function toggleBGM() {
+            if (audioBgm.paused) {
+                audioBgm.play();
+                bgmToggleIcon.innerText = "⏸️";
+                isBgmManuallyPaused = false;
+            } else {
+                audioBgm.pause();
+                bgmToggleIcon.innerText = "▶️";
+                isBgmManuallyPaused = true;
+            }
+        }
+
+        function startParticles(emoji) {
+            clearInterval(particleInterval);
+            particlesContainer.innerHTML = ''; 
+            
+            particleInterval = setInterval(() => {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                particle.innerText = emoji;
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                particle.style.fontSize = (Math.random() * 1 + 1) + 'rem';
+                
+                particlesContainer.appendChild(particle);
+                setTimeout(() => { particle.remove(); }, 5000);
+            }, 300);
+        }
+
+        function toggleVN() {
+            if (isVnPlaying) {
+                audioVn.pause();
+                resetVnState();
+            } else {
+                audioVn.play();
+                isVnPlaying = true;
+                btnVn.innerHTML = `<span id="vn-icon">⏸️</span> Jeda Suaraku`;
+                vnMediaContainer.style.display = 'block';
+                if (!isBgmManuallyPaused && !audioBgm.paused) {
+                    fadeVolume(audioBgm, 1.0, 0.2, 500); 
+                }
+            }
+        }
+
+        audioVn.onended = function() { resetVnState(); };
+
+        function resetVnState() {
+            isVnPlaying = false;
+            btnVn.innerHTML = `<span id="vn-icon">▶️</span> Dengarkan Suaraku`;
+            vnMediaContainer.style.display = 'none';
+            if (!isBgmManuallyPaused && audioBgm.volume < 1.0) {
+                fadeVolume(audioBgm, 0.2, 1.0, 500);
+            }
+        }
+
+        function fadeVolume(audio, start, end, duration) {
+            clearInterval(fadeInterval);
+
+            const steps = 20; const stepTime = duration / steps;
+            const volumeStep = (end - start) / steps;
+            let currentStep = 0;
+            
+            fadeInterval = setInterval(() => {
+                currentStep++;
+                let newVol = start + (volumeStep * currentStep);
+                if (newVol > 1) newVol = 1; if (newVol < 0) newVol = 0;
+                audio.volume = newVol;
+                if (currentStep >= steps) { clearInterval(fadeInterval); audio.volume = end; }
+            }, stepTime);
+        }
+
+        let waClickCount = 0;
+        const waBtn = document.getElementById('wa-btn');
+
+        waBtn.addEventListener('click', (e) => {
+            waClickCount++;
+            
+            if (waClickCount < 5) {
+                audioSfx.currentTime = 0; 
+                audioSfx.play().catch(err => console.log("SFX dicegah browser:", err));
+
+                const maxX = window.innerWidth - waBtn.offsetWidth - 20;
+                const maxY = window.innerHeight - waBtn.offsetHeight - 20;
+                
+                const randomX = Math.max(20, Math.random() * maxX);
+                const randomY = Math.max(20, Math.random() * maxY);
+                
+                waBtn.style.position = 'fixed';
+                waBtn.style.transform = 'none'; 
+                waBtn.style.left = `${randomX}px`;
+                waBtn.style.top = `${randomY}px`;
+                waBtn.style.bottom = 'auto'; 
+            } else {
+                window.open(`https://wa.me/${nomorWA}`, '_blank');
+                waClickCount = 0; 
+                
+                waBtn.style.position = 'fixed';
+                waBtn.style.bottom = '30px';
+                waBtn.style.top = 'auto';
+                waBtn.style.left = '50%';
+                waBtn.style.transform = 'translateX(-50%)';
+            }
+        });
+    </script>
+</body>
+</html>
